@@ -41,6 +41,16 @@ interface StockTableProps {
   onAddStockClick: () => void
 }
 
+// ---------------------------------------------------------------------------
+// StockTable Component: Built with TanStack Table (v8) + Material-UI
+// ---------------------------------------------------------------------------
+// Architecture Note:
+// TanStack Table is a "headless" library. It manages table state (sorting, filtering,
+// row models) under the hood without imposing any HTML markup or CSS styling.
+// We then connect it directly to Material-UI components (Table, TableRow, TableCell)
+// for complete design control and rich accessibility.
+// ---------------------------------------------------------------------------
+
 const columnHelper = createColumnHelper<Stock>()
 
 export const StockTable: React.FC<StockTableProps> = ({
@@ -48,12 +58,17 @@ export const StockTable: React.FC<StockTableProps> = ({
   onDeleteStock,
   onAddStockClick,
 }) => {
+  // Connect to Zustand store for reactive portfolio data
   const { stocks, selectedStockId, setSelectedStockId } = usePortfolioStore()
+
+  // Local table states for sorting and search filter
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
 
+  // Define table column schemas with useMemo for optimal rendering performance
   const columns = useMemo(
     () => [
+      // 1. Ticker Column with click-to-select chip
       columnHelper.accessor('ticker', {
         header: 'Ticker',
         cell: (info) => {
@@ -105,6 +120,7 @@ export const StockTable: React.FC<StockTableProps> = ({
           </Typography>
         ),
       }),
+      // 6. Computed Column: Total Market Value = Quantity * Current Price
       columnHelper.accessor(
         (row) => row.quantity * row.currentPrice,
         {
@@ -117,6 +133,7 @@ export const StockTable: React.FC<StockTableProps> = ({
           ),
         }
       ),
+      // 7. Computed Column: Unrealized Gain/Loss = Market Value - Total Cost Basis
       columnHelper.accessor(
         (row) => {
           const invested = row.quantity * row.purchasePrice
@@ -154,6 +171,7 @@ export const StockTable: React.FC<StockTableProps> = ({
           </Typography>
         ),
       }),
+      // 9. Row Action Buttons: Chart shortcut, Edit modal, Delete confirmation
       columnHelper.display({
         id: 'actions',
         header: () => <Box sx={{ textAlign: 'center' }}>Actions</Box>,
@@ -210,6 +228,8 @@ export const StockTable: React.FC<StockTableProps> = ({
     [selectedStockId, setSelectedStockId, onEditStock, onDeleteStock]
   )
 
+  // Initialize the TanStack Table instance
+  // Integrates core row mapping, client-side sorting, and multi-field global search
   const table = useReactTable({
     data: stocks,
     columns,
@@ -222,6 +242,7 @@ export const StockTable: React.FC<StockTableProps> = ({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    // Custom case-insensitive filter matching both ticker symbol and company name
     globalFilterFn: (row, _, filterValue: string) => {
       const query = (filterValue || '').toLowerCase().trim()
       const ticker = row.original.ticker.toLowerCase()

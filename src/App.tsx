@@ -23,12 +23,20 @@ import { DeleteStockDialog } from './components/portfolio/DeleteStockDialog'
 import { usePortfolioStore } from './store/usePortfolioStore'
 import type { Stock } from './types/stock'
 
-// Custom theme for modern financial application
+// ---------------------------------------------------------------------------
+// Design System & Theme: Material-UI (MUI v6)
+// ---------------------------------------------------------------------------
+// Configured with a modern financial palette:
+// - Primary: Trustworthy indigo blue (#2563eb)
+// - Success: Vibrant emerald green (#10b981) for positive gains
+// - Error: Crisp crimson red (#ef4444) for losses
+// - Typography: Inter font family for high legibility in financial data tables
+// ---------------------------------------------------------------------------
 const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2563eb', // Modern indigo blue
+      main: '#2563eb',
       dark: '#1d4ed8',
       light: '#60a5fa',
     },
@@ -197,7 +205,7 @@ export const App: React.FC = () => {
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            Stock Portfolio Application • React, TypeScript, Highcharts, TanStack Table & Zustand
+            Stock Portfolio Manager • 2026
           </Typography>
         </Box>
 

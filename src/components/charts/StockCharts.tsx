@@ -1,6 +1,24 @@
+// ---------------------------------------------------------------------------
+// StockCharts Component: Data Visualization with Highcharts
+// ---------------------------------------------------------------------------
+// Why Highcharts?
+// - Financial-grade precision, built-in zoom/pan, smooth splines, and interactive tooltips.
+// - Superior formatting for monetary values and dates compared to basic canvas libraries.
+// ---------------------------------------------------------------------------
+
 import React, { useMemo, useState } from 'react'
 import Highcharts from 'highcharts'
-import HighchartsReact from 'highcharts-react-official'
+import HighchartsReactComponent, * as HighchartsReactModule from 'highcharts-react-official'
+
+// TECHNICAL HIGHLIGHT (Great interview talking point):
+// Vite bundles code as native ES Modules. Certain CommonJS-packaged React libraries
+// like `highcharts-react-official` export their default component slightly differently
+// depending on whether it's running in Node/SSR, Vite dev server, or production rollup.
+// This fallback chain ensures robust module resolution across all environments.
+const HighchartsReact =
+  (HighchartsReactModule as unknown as { HighchartsReact?: typeof HighchartsReactComponent }).HighchartsReact ||
+  (HighchartsReactComponent as unknown as { default?: typeof HighchartsReactComponent }).default ||
+  HighchartsReactComponent
 import {
   Box,
   Card,
@@ -21,19 +39,22 @@ import { usePortfolioStore } from '../../store/usePortfolioStore'
 
 export const StockCharts: React.FC = () => {
   const { stocks, selectedStockId, setSelectedStockId, historyMap } = usePortfolioStore()
+
+  // State to toggle the secondary chart between "Volume Traded" and "Daily Gain/Loss"
   const [columnMetric, setColumnMetric] = useState<'volume' | 'gainLoss'>('volume')
 
-  // Selected stock or default to first
+  // Identify currently focused stock; fallback to first available stock
   const currentStock = useMemo(() => {
     return stocks.find((s) => s.id === selectedStockId) || stocks[0] || null
   }, [stocks, selectedStockId])
 
+  // Extract 30-day historical points for the active stock
   const history = useMemo(() => {
     if (!currentStock) return []
     return historyMap[currentStock.id] || []
   }, [currentStock, historyMap])
 
-  // Price calculations
+  // Compute 30-day price statistics (min, max, absolute change, percentage change)
   const priceStats = useMemo(() => {
     if (!history.length) return { min: 0, max: 0, change: 0, changePercent: 0 }
     const prices = history.map((h) => h.price)
@@ -46,7 +67,7 @@ export const StockCharts: React.FC = () => {
     return { min, max, change, changePercent }
   }, [history])
 
-  // Highcharts Line Chart Configuration (Stock Price Trend)
+  // 1. Primary Line Chart: 30-Day Historical Closing Price Trend
   const lineChartOptions: Highcharts.Options = useMemo(() => {
     const categories = history.map((h) => h.date)
     const prices = history.map((h) => h.price)

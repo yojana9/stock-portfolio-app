@@ -19,11 +19,22 @@ interface AddStockModalProps {
   onClose: () => void
 }
 
+// ---------------------------------------------------------------------------
+// AddStockModal Component
+// ---------------------------------------------------------------------------
+// Handles user creation of new portfolio positions.
+// Uses controlled inputs with instant client-side validation for:
+// - Ticker format (1-8 chars, alphabetic/dots)
+// - Positive numerical quantities and prices
+// - Historical purchase dates (prevent future purchase dates)
+// ---------------------------------------------------------------------------
+
 export const AddStockModal: React.FC<AddStockModalProps> = ({ open, onClose }) => {
   const { addStock } = usePortfolioStore()
 
   const today = new Date().toISOString().split('T')[0]
 
+  // Form input state
   const [formData, setFormData] = useState<StockFormData>({
     ticker: '',
     companyName: '',
@@ -32,11 +43,14 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ open, onClose }) =
     purchaseDate: today,
   })
 
+  // Validation error state mapped to field keys
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Strict client-side validation before submission
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
 
+    // Ticker validation: non-empty, letters & dots only (e.g. BRK.B)
     if (!formData.ticker.trim()) {
       newErrors.ticker = 'Ticker symbol is required.'
     } else if (!/^[A-Za-z.]{1,8}$/.test(formData.ticker.trim())) {
@@ -47,14 +61,17 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ open, onClose }) =
       newErrors.companyName = 'Company name is required.'
     }
 
+    // Number validation: positive non-zero quantity
     if (!formData.quantity || formData.quantity <= 0) {
       newErrors.quantity = 'Quantity must be greater than 0.'
     }
 
+    // Currency validation: positive non-zero purchase price
     if (!formData.purchasePrice || formData.purchasePrice <= 0) {
       newErrors.purchasePrice = 'Purchase price must be greater than 0.'
     }
 
+    // Date validation: valid date, disallow future purchase dates
     if (!formData.purchaseDate) {
       newErrors.purchaseDate = 'Purchase date is required.'
     } else if (new Date(formData.purchaseDate) > new Date()) {
